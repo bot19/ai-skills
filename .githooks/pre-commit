@@ -1,0 +1,30 @@
+#!/bin/sh
+# Commits to this repo go through an AI session that scrubs files first (see CLAUDE.md).
+# Claude Code sets CLAUDECODE=1 in its shell; anything else is turned away.
+
+if [ "$CLAUDECODE" != "1" ]; then
+  echo "✋ Commit blocked: commits here go through a Claude Code session," >&2
+  echo "   which scrubs sensitive info first (see CLAUDE.md). Ask Claude to commit." >&2
+  exit 1
+fi
+
+# Generic leak patterns only: no private names are stored here.
+files=$(git diff --cached --name-only --diff-filter=ACM)
+[ -z "$files" ] && exit 0
+
+hits=$(git diff --cached --name-only --diff-filter=ACM -z |
+  xargs -0 git grep --cached -I -n -E \
+    -e '/Users/[A-Za-z0-9._-]+' \
+    -e '[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}' \
+    -e '(sk-|ghp_|gho_|github_pat_|xox[abpr]-|AKIA)[A-Za-z0-9_-]{10,}' \
+    -e '(sk|pk|rk|whsec)_(live|test)_[A-Za-z0-9]{10,}' \
+    -e '-----BEGIN [A-Z ]*PRIVATE KEY-----' \
+    -- 2>/dev/null |
+  grep -vE '@example\.(com|org|net)|noreply@')
+
+if [ -n "$hits" ]; then
+  echo "✋ Commit blocked: possible sensitive info in staged files:" >&2
+  echo "$hits" >&2
+  echo "   Scrub per CLAUDE.md, re-stage, and commit again." >&2
+  exit 1
+fi

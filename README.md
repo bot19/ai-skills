@@ -31,3 +31,13 @@ metadata:
 ```
 
 When you change a skill, bump its version here and in its frontmatter.
+
+## Keeping this repo clean
+
+Skills and artifacts often start life in real work, so everything is scrubbed before it is committed: no employer or client names, real people, internal links, ticket IDs, credentials or private paths. Generic stand-ins (`Acme`, `Jane Doe`, `example.com`) take their place.
+
+- Unscrubbed originals stay in `X LOCAL only/`, which is gitignored.
+- [`CLAUDE.md`](CLAUDE.md) gives AI agents working in this repo the full scrub checklist, so a session that edits a skill or artifact cleans it before committing.
+- A pre-commit hook in [`.githooks/`](.githooks/) only lets commits through from a Claude Code session, and blocks obvious leaks such as private paths, real emails and API tokens. Turn it on after cloning with `git config core.hooksPath .githooks`.
+
+If you fork this repo to share your own skills, the same habit is worth keeping.
