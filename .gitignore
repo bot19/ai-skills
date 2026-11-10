@@ -1,0 +1,26 @@
+# macOS
+.DS_Store
+._*
+.Spotlight-V100
+.Trashes
+
+# Windows
+Thumbs.db
+desktop.ini
+
+# Editors
+.vscode/
+.idea/
+*.swp
+*~
+
+# Python (explainer-sheet/scripts)
+__pycache__/
+*.pyc
+.venv/
+
+# Temp files
+*.tmp
+
+# Local-only files (never committed)
+X LOCAL only/
