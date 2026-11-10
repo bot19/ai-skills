@@ -1,0 +1,489 @@
+<meta charset="utf-8">
+<title>DNS: buying a domain and visiting a website</title>
+<style>
+@page { size: A4; margin: 10mm 12mm 8mm 12mm; }
+* { box-sizing: border-box; }
+body {
+  font-family: "Liberation Sans", Helvetica, Arial, sans-serif;
+  font-size: 15px; line-height: 1.55; color: #1c1c1a;
+  margin: 0 auto; padding: 32px 24px 60px; max-width: 920px; background: #fff;
+}
+h1 { font-size: 26px; font-weight: 600; margin: 0 0 3px; letter-spacing: -0.3px; }
+.sub { font-size: 14px; color: #6b6a64; margin: 0 0 26px; }
+h2 { font-size: 17px; font-weight: 600; margin: 0 0 8px; padding-bottom: 5px; border-bottom: 1px solid #d8d6cd; }
+.sec { margin-bottom: 30px; }
+p { margin: 0 0 9px; }
+.muted { color: #6b6a64; }
+code, pre { font-family: "DejaVu Sans Mono", "SFMono-Regular", Menlo, Consolas, monospace; }
+code { font-size: 13px; background: #F1EFE8; padding: 1px 4px; border-radius: 3px; }
+pre { background: #F1EFE8; border-radius: 4px; padding: 12px 14px; margin: 0; font-size: 13px; line-height: 1.5; white-space: pre-wrap; }
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 26px; }
+ul { margin: 0 0 9px; padding-left: 18px; }
+li { margin-bottom: 7px; }
+table { width: 100%; border-collapse: collapse; font-size: 14px; }
+th { text-align: left; font-weight: 600; padding: 5px 6px; border-bottom: 1px solid #b4b2a9; }
+td { padding: 6px; border-bottom: 1px solid #e6e4dc; vertical-align: top; }
+td:first-child { font-family: "DejaVu Sans Mono", "SFMono-Regular", Menlo, Consolas, monospace; white-space: nowrap; width: 74px; }
+table.who td:first-child { width: 22px; font-family: inherit; font-weight: 600; }
+table.who td { font-size: 13px; }
+table.who td:nth-child(2), table.who td:nth-child(3), table.who td:nth-child(4) { white-space: nowrap; }
+table.who .did { color: #575651; }
+.eg { font-family: "DejaVu Sans Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12.5px; color: #8a8981; margin-top: 2px; line-height: 1.5; }
+li .eg { margin-top: 5px; }
+.warn { border-left: 3px solid #BA7517; background: #FDF7EC; padding: 12px 15px; }
+.warn strong { color: #854F0B; }
+.quote { border-left: 3px solid #0F6E56; background: #F3FAF7; padding: 12px 15px; margin-bottom: 10px; }
+.quote p { margin: 0 0 6px; }
+.quote p:last-child { margin: 0; }
+
+.flow { display: flex; align-items: stretch; margin: 10px 0 16px; }
+.card { flex: 1; border-radius: 6px; padding: 11px 13px; border: 1px solid; }
+.card h3 { font-size: 15px; font-weight: 600; margin: 0 0 1px; }
+.card .who { font-size: 12.5px; margin: 0 0 7px; }
+.card p { font-size: 13.5px; line-height: 1.45; margin: 0; }
+.c1 { background: #F1EFE8; border-color: #B4B2A9; }
+.c1 h3 { color: #2C2C2A; } .c1 .who { color: #5F5E5A; } .c1 p { color: #3d3d3a; }
+.c2 { background: #EEEDFE; border-color: #7F77DD; }
+.c2 h3 { color: #26215C; } .c2 .who { color: #534AB7; } .c2 p { color: #3C3489; }
+.c3 { background: #E1F5EE; border-color: #5DCAA5; }
+.c3 h3 { color: #04342C; } .c3 .who { color: #0F6E56; } .c3 p { color: #085041; }
+.arw { flex: 0 0 30px; display: flex; align-items: center; justify-content: center; color: #8a8981; font-size: 17px; }
+
+.zones { display: flex; align-items: flex-start; margin: 12px 0 16px; }
+.pane { border: 1px solid #d8d6cd; border-radius: 8px; background: #FBFAF7; padding: 12px 14px; min-width: 0; }
+.zleft { flex: 1; }
+.zcol { flex: 1.25; display: flex; flex-direction: column; gap: 10px; min-width: 0; }
+.dead { border-style: dashed; background: #fff; }
+.ph { font-weight: 600; font-size: 14.5px; margin: 0 0 1px; }
+.dead .ph { color: #8a8981; }
+.pm { font-size: 12.5px; color: #8a8981; margin: 0 0 8px; }
+.zrow { font-family: "DejaVu Sans Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12.5px; padding: 4px 0; border-top: 1px solid #e6e4dc; display: flex; gap: 8px; }
+.zrow span:first-child { color: #6b6a64; flex: 0 0 96px; }
+.zrow span:nth-child(2) { color: #0F6E56; flex: 0 0 50px; }
+.zrow span:last-child { min-width: 0; overflow-wrap: anywhere; }
+.dead .zrow, .dead .zrow span { color: #a5a49c; }
+.badge { display: inline-block; font-size: 11.5px; border-radius: 999px; padding: 2px 10px; margin-bottom: 7px; }
+.live { color: #0F6E56; background: #E1F5EE; }
+.off { color: #854F0B; background: #FAEEDA; }
+.note { font-size: 12.5px; color: #8a8981; margin: 8px 0 0; }
+.chip { margin-top: 9px; font-size: 12.5px; color: #185FA5; background: #E6F1FB; border-radius: 5px; padding: 7px 10px; }
+.zmid { flex: 0 0 74px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; padding-top: 54px; }
+.zmid .ar { font-size: 19px; color: #6b6a64; line-height: 1; }
+.zmid .lb { font-size: 11.5px; color: #8a8981; text-align: center; }
+svg { display: block; width: 100%; height: auto; }
+.shrink svg { width: 84%; margin: 0 auto; }
+.t { font: 500 14px "Liberation Sans", Helvetica, Arial, sans-serif; }
+.ts { font: 400 12px "Liberation Sans", Helvetica, Arial, sans-serif; }
+hr.part { border: 0; margin: 29px 0 20px; }
+
+.lists { display: grid; grid-template-columns: 1fr 26px 1fr 26px 1fr; row-gap: 13px; margin: 12px 0 14px; }
+.lp { border: 1px solid #d8d6cd; border-radius: 8px; background: #FBFAF7; padding: 12px 13px; min-width: 0; }
+.lh { font-weight: 600; font-size: 14px; margin: 0 0 1px; }
+.ls { font-size: 12px; color: #8a8981; margin: 0 0 9px; }
+.r { border-top: 1px solid #e6e4dc; padding: 5px 0; }
+.k { font-family: "DejaVu Sans Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; color: #6b6a64; }
+.v { font-family: "DejaVu Sans Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; color: #8a8981; overflow-wrap: anywhere; }
+.hit { background: #E1F5EE; border-radius: 5px; padding: 5px 7px; margin: 0 -7px; border-top: none; }
+.hit .k { color: #0F6E56; font-weight: 600; }
+.hit .v { color: #0F6E56; }
+.tag { font-size: 12px; color: #0F6E56; background: #E1F5EE; border-radius: 5px; padding: 6px 9px; margin-top: 9px; }
+.lgap { display: flex; align-items: center; justify-content: center; color: #6b6a64; font-size: 17px; }
+.say { font-family: Caladea, Georgia, "Times New Roman", serif; font-size: 13.5px; line-height: 1.5; color: #57565170; color: #575651; border-top: 2px solid #d8d6cd; padding-top: 8px; min-width: 0; }
+.say b { font-weight: 600; color: #1c1c1a; }
+.seq { max-width: 640px; margin: 12px auto 14px; }
+.split70 { display: grid; grid-template-columns: 68fr 32fr; gap: 22px; align-items: start; }
+.split60 { display: grid; grid-template-columns: 60fr 40fr; gap: 22px; align-items: start; }
+.split60 .seq { max-width: none; margin: 0; }
+.split60 p:first-child { margin-top: 0; }
+.split70 .seq { max-width: none; margin: 0; }
+.split70 p:first-child { margin-top: 0; }
+
+.strip { display: flex; align-items: stretch; margin: 12px 0 14px; }
+.st { flex: 1; border: 1px solid #d8d6cd; border-radius: 8px; background: #FBFAF7; padding: 11px 12px; min-width: 0; }
+.warnbox { background: #FDF7EC; border-color: #BA7517; }
+.tm { font-family: "DejaVu Sans Mono", "SFMono-Regular", Menlo, Consolas, monospace; font-size: 12px; color: #8a8981; margin: 0 0 2px; }
+.warnbox .tm { color: #854F0B; }
+.hd { font-weight: 600; margin: 0 0 5px; font-size: 14px; }
+.bd { font-size: 12.5px; line-height: 1.45; color: #575651; margin: 0; }
+.sp { font-size: 11.5px; margin-top: 7px; display: inline-block; border-radius: 999px; padding: 2px 9px; }
+.slow { color: #854F0B; background: #FAEEDA; }
+.fast { color: #0F6E56; background: #E1F5EE; }
+.gp { flex: 0 0 22px; display: flex; align-items: center; justify-content: center; color: #6b6a64; font-size: 15px; }
+
+@media print {
+  body { font-size: 9pt; line-height: 1.42; max-width: none; padding: 0; margin: 0; }
+  h1 { font-size: 15pt; margin-bottom: 1mm; }
+  .sub { font-size: 8.6pt; margin-bottom: 3mm; }
+  h2 { font-size: 9.8pt; margin-bottom: 1.6mm; padding-bottom: 1mm; }
+  .sec { margin-bottom: 2.6mm; }
+  p { margin-bottom: 1.6mm; }
+  .cols { gap: 5.5mm; }
+  li { margin-bottom: 1.2mm; }
+  code { font-size: 8.3pt; }
+  pre { font-size: 8.4pt; padding: 1.8mm 2.2mm; line-height: 1.4; }
+  table { font-size: 8.8pt; } td { padding: 0.9mm 1.5mm; } th { padding: 1mm 1.5mm; }
+  td:first-child { width: 16mm; }
+  .eg { font-size: 7.7pt; }
+  table.who td { font-size: 8.2pt; }
+  .warn, .quote { padding: 1.8mm 2.6mm; }
+  .card { padding: 1.7mm 2.2mm; } .card h3 { font-size: 9.2pt; }
+  .card .who { font-size: 7.9pt; margin-bottom: 1.4mm; } .card p { font-size: 8.3pt; line-height: 1.4; }
+  .arw { flex-basis: 6mm; font-size: 11pt; }
+  .pane { padding: 1.8mm 2.2mm; } .ph { font-size: 8.8pt; } .pm { font-size: 7.7pt; margin-bottom: 1.4mm; }
+  .zrow, .k, .v { font-size: 7.7pt; } .zrow { padding: 0.7mm 0; }
+  .chip, .note, .tag { font-size: 7.7pt; padding: 1.2mm 1.8mm; margin-top: 1.4mm; }
+  .zmid { flex-basis: 9mm; padding-top: 9mm; }
+  .lists { grid-template-columns: 1fr 5mm 1fr 5mm 1fr; row-gap: 2mm; }
+  .lp { padding: 1.8mm 2.2mm; } .lh { font-size: 8.8pt; } .ls { font-size: 7.5pt; margin-bottom: 1.4mm; }
+  .say { font-size: 8.2pt; padding-top: 1.4mm; }
+  .st { padding: 1.6mm 2mm; } .tm { font-size: 7.7pt; } .hd { font-size: 8.8pt; margin-bottom: 0.8mm; }
+  .bd { font-size: 7.9pt; line-height: 1.38; } .sp { font-size: 7.4pt; margin-top: 1.2mm; }
+  .gp { flex-basis: 4mm; font-size: 9pt; }
+  .seq { margin: 1.5mm auto 2mm; }
+  .split70, .split60 { gap: 5mm; }
+  .split60 .seq { margin: 0; }
+  .split70 .seq { margin: 0; }
+  hr.part { display: block; border: 0; margin: 3mm 0 2.4mm; }
+  .page { break-after: auto; page-break-after: auto; }
+  .seq, .strip, .zones, .lists, .flow, .warn, table, pre { break-inside: avoid; page-break-inside: avoid; }
+  h1, h2 { break-after: avoid; page-break-after: avoid; }
+  body { zoom: 1.10; }
+}
+</style>
+
+<div class="page">
+<h1>What DNS is</h1>
+<div class="sec">
+<div class="cols">
+<div>
+<p><strong>DNS stands for Domain Name System.</strong> It's the internet's address book.</p>
+<p>Computers find each other by number. People remember names. DNS is the system that turns one into the other, and it's spread across millions of machines rather than kept in one place.</p>
+</div>
+<div>
+<p>DNS isn't one thing. It's a set of pieces working together: the names themselves, the companies that keep the lists, the servers that answer questions, and the copies that get cached along the way. Each has its own section on this sheet.</p>
+<div class="eg">google.com &rarr; 142.250.72.14 &nbsp;&mdash; that swap, done a few trillion times a day</div>
+</div>
+</div>
+</div>
+
+<h1 style="margin-top:6mm">Part 1 &middot; Buying a domain (example.com)</h1>
+
+<div class="sec cols">
+<div>
+<h2>Names are read backwards</h2>
+<p>Computers find each other by number &mdash; an IP address like <code>142.250.72.14</code>. A domain name is a label pointing at one.</p>
+<p>Names are read <strong>right to left</strong>, widest part first. Every dot is one step down a tree.</p>
+</div>
+<div>
+<pre>www  .  google  .  com  .
+ │        │         │   └─ the root
+ │        │         └─ top level
+ │        └─ the bit you pay for
+ └─ yours to invent, as many as you like</pre>
+<p class="muted" style="margin-top:8px">There are a few hundred top-level domains (<code>.com</code>, <code>.org</code>, <code>.au</code>). You rent one name inside one of them. Everything to the left of it is yours to create at no cost: <code>blog.example.com</code>, <code>api.example.com</code>.</p>
+</div>
+</div>
+
+<div class="sec">
+<h2>What about example.com.au?</h2>
+<p><strong>It's an extra layer, and a completely separate branch.</strong> <code>.com.au</code> has nothing to do with <code>.com</code> &mdash; they just reuse the same word, like two different folders each containing a subfolder called <em>docs</em>.</p>
+<div class="split60">
+<div class="seq">
+<svg viewBox="4 14 672 194" xmlns="http://www.w3.org/2000/svg">
+<rect x="8" y="84" width="112" height="44" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+<text class="t" x="64" y="100" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">The root</text>
+<text class="ts" x="64" y="117" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">1,500 TLDs</text>
+<path d="M120 106 L145 106 L145 42 L166 42" fill="none" stroke="#6b6a64" stroke-width="1.5"/>
+<path d="M120 106 L145 106 L145 162 L166 162" fill="none" stroke="#6b6a64" stroke-width="1.5"/>
+<rect x="170" y="20" width="150" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="t" x="245" y="36" text-anchor="middle" dominant-baseline="central" fill="#04342C">.com</text>
+<text class="ts" x="245" y="53" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">Verisign</text>
+<line x1="320" y1="42" x2="346" y2="42" stroke="#6b6a64" stroke-width="1.5"/>
+<rect x="350" y="20" width="170" height="44" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="t" x="435" y="36" text-anchor="middle" dominant-baseline="central" fill="#26215C">example.com</text>
+<text class="ts" x="435" y="53" text-anchor="middle" dominant-baseline="central" fill="#534AB7">your nameservers</text>
+<text class="ts" x="540" y="42" dominant-baseline="central" fill="#8a8981">3 questions</text>
+<rect x="170" y="140" width="150" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="t" x="245" y="156" text-anchor="middle" dominant-baseline="central" fill="#04342C">.au</text>
+<text class="ts" x="245" y="173" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">auDA</text>
+<line x1="320" y1="162" x2="346" y2="162" stroke="#6b6a64" stroke-width="1.5"/>
+<rect x="350" y="140" width="150" height="44" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="t" x="425" y="156" text-anchor="middle" dominant-baseline="central" fill="#04342C">.com.au</text>
+<text class="ts" x="425" y="173" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">a zone inside .au</text>
+<line x1="500" y1="162" x2="516" y2="162" stroke="#6b6a64" stroke-width="1.5"/>
+<rect x="520" y="140" width="152" height="44" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="t" x="596" y="156" text-anchor="middle" dominant-baseline="central" fill="#26215C">example.com.au</text>
+<text class="ts" x="596" y="173" text-anchor="middle" dominant-baseline="central" fill="#534AB7">your nameservers</text>
+<text class="ts" x="596" y="200" text-anchor="middle" fill="#8a8981">4 questions</text>
+</svg>
+</div>
+<div>
+<p>Only two things change: your signpost sits in <code>.com.au</code> rather than <code>.com</code>, and the registry is auDA rather than Verisign. Zone files, records, nameservers and caching all behave exactly as described elsewhere.</p>
+<p class="muted">It can go deeper still. In <code>jobs.careers.vic.gov.au</code>, <code>.au</code> belongs to auDA and <code>.gov</code> is handed to the Digital Transformation Agency. Same idea, repeated.</p>
+</div>
+</div>
+<div class="warn" style="margin-top:2mm">
+<p style="margin:0"><strong>Two practical differences.</strong> auDA has eligibility rules that <code>.com</code> doesn't &mdash; you generally need an Australian presence, usually an ABN. And your registrar has to be accredited for <code>.au</code> specifically; not all of them are.</p>
+</div>
+</div>
+
+<div class="sec">
+<h2>What actually happens when you pay</h2>
+<div class="flow">
+<div class="card c1"><h3>You</h3><p class="who">the registrant</p><p>Pick a name nobody has taken, and say which nameservers should be in charge of it.</p></div>
+<div class="arw">&rarr;</div>
+<div class="card c2"><h3>Registrar</h3><p class="who">Namecheap, GoDaddy</p><p>A shop licensed to write to the registry for you. This is who you pay, and who you tell when you want to change nameservers.</p></div>
+<div class="arw">&rarr;</div>
+<div class="card c3"><h3>.com registry</h3><p class="who">Verisign</p><p>One company runs the master list for each top-level domain, and adds your signpost to it. Never sells to the public.</p></div>
+<div class="arw">&rarr;</div>
+<div class="card c3"><h3>Your nameservers</h3><p class="who">Cloudflare, Route&nbsp;53</p><p>The machines your signpost points at. They hold your records and answer questions about your name.</p></div>
+</div>
+<p>What you pay for is one <strong>signpost</strong> in the <code>.com</code> list, reading <em>anything ending in example.com &mdash; go ask these nameservers.</em> Stop paying and it's taken down: the name still exists, it just leads nowhere.</p>
+</div>
+
+<div class="sec">
+<h2>What your nameservers hold</h2>
+<p>A list of records, called the <strong>zone</strong>. Each record answers one kind of question about your name.</p>
+<div class="cols">
+<table>
+<tr><th>Record</th><th>Answers the question</th></tr>
+<tr><td>A</td><td>What address is this name at?<div class="eg">example.com &rarr; 93.184.216.34</div></td></tr>
+<tr><td>AAAA</td><td>Same question, newer style. Most names carry both.<div class="eg">example.com &rarr; 2606:2800:220::1</div></td></tr>
+<tr><td>CNAME</td><td>Is this just another name for something else?<div class="eg">www.example.com &rarr; example.com</div></td></tr>
+</table>
+<table>
+<tr><th>Record</th><th>Answers the question</th></tr>
+<tr><td>NS</td><td>Which nameservers are in charge here?<div class="eg">example.com &rarr; ns1.cloudflare.com</div></td></tr>
+<tr><td>MX</td><td>Where should email to this domain be delivered?<div class="eg">example.com &rarr; mail.google.com</div></td></tr>
+<tr><td>TXT</td><td>Free text. Mostly used to prove you own the name.<div class="eg">"google-site-verification=x7Kd2..."</div></td></tr>
+</table>
+</div>
+</div>
+
+<div class="sec">
+<h2>Two zone files can exist. Only one is read.</h2>
+<p>Say you buy <code>example.com</code> at Namecheap, then build your site and host it on Cloudflare. During setup Cloudflare tells you to change your nameservers to <code>ada.ns.cloudflare.com</code>. Hosts ask for this so they can manage your DNS for you, switch on HTTPS automatically, and route visitors through their own network.</p>
+<p>So you paste those names into Namecheap's nameserver box and save. You now have <strong>two</strong> zone files, both real, both editable: the one Namecheap made when you bought the name, and the one Cloudflare made when you signed up.</p>
+
+<div class="zones">
+  <div class="pane zleft">
+    <p class="ph">The <code>.com</code> registry's list</p>
+    <p class="pm">Verisign &middot; the signpost</p>
+    <div class="zrow"><span>example.com</span><span>NS</span><span>ada.ns.cloudflare.com</span></div>
+    <div class="zrow"><span></span><span>glue</span><span>203.0.113.10</span></div>
+    <div class="chip">Set in the <strong>nameserver box at your registrar</strong>. This one line decides everything to the right.</div>
+    <p class="note"><strong>The <code>glue</code> line is a detail you can ignore.</strong> It's only there when a domain's nameservers are named inside itself, the way <code>google.com</code> uses <code>ns1.google.com</code>. Point at Cloudflare and you'll never need one.</p>
+  </div>
+  <div class="zmid">
+    <div class="ar">&rarr;</div>
+    <div class="lb">names one<br>of these</div>
+  </div>
+  <div class="zcol">
+    <div class="pane">
+      <span class="badge live">read by everyone</span>
+      <p class="ph">Zone file at Cloudflare</p>
+      <p class="pm">your web host</p>
+      <div class="zrow"><span>example.com</span><span>A</span><span>93.184.216.34</span></div>
+      <div class="zrow"><span>www</span><span>CNAME</span><span>example.com</span></div>
+      <div class="zrow"><span>example.com</span><span>MX</span><span>mail.google.com</span></div>
+    </div>
+    <div class="pane dead">
+      <span class="badge off">ignored</span>
+      <p class="ph">Zone file at Namecheap</p>
+      <p class="pm">where you bought the name</p>
+      <div class="zrow"><span>example.com</span><span>A</span><span>198.51.100.7</span></div>
+      <div class="zrow"><span>example.com</span><span>MX</span><span>mail.namecheap.com</span></div>
+      <p class="note">Still exists. Still lets you edit and save. Nobody asks it anything, so nothing you type here has any effect.</p>
+    </div>
+  </div>
+</div>
+
+<p>The NS line at the registry decides which one the world reads. It names Cloudflare, so every question about your domain goes to Cloudflare, and Cloudflare's zone file answers. Namecheap's copy is still sitting there, still shows your records, still saves your edits. Nobody ever asks it anything.</p>
+<div class="warn">
+<p style="margin:0"><strong>"I changed the record and nothing happened"</strong> &mdash; check which nameservers the registry actually names.</p>
+</div>
+
+<h2 style="margin-top:4mm">Who holds what</h2>
+<table class="who">
+<tr><th></th><th>Registrar</th><th>DNS host</th><th>App host</th><th>What you actually did</th></tr>
+<tr><td>1</td><td>Namecheap</td><td>Namecheap</td><td>DigitalOcean</td><td class="did">Rented a server, pasted its IP into an A record at Namecheap</td></tr>
+<tr><td>2</td><td>Namecheap</td><td>Cloudflare</td><td>Cloudflare</td><td class="did">Cloudflare gave you two nameserver names; you pasted them into Namecheap's nameserver field</td></tr>
+<tr><td>3</td><td>Namecheap</td><td>DNSimple</td><td>DigitalOcean</td><td class="did">DNSimple gave you four nameserver names; you pasted those into Namecheap's field instead</td></tr>
+</table>
+<div class="eg" style="margin-top:2mm">The registrar column never changes &mdash; that's just where you bought the name. Only the middle one ever moves.</div>
+<div class="quote" style="margin-top:2.5mm">
+<p style="margin:0">Row 1 pastes into a <strong>record</strong>, inside Namecheap's zone file. Rows 2 and 3 paste into the <strong>nameserver field</strong>, which isn't a record at all &mdash; it goes to the registry and decides whose zone file gets read. Compare rows 1 and 3: same server, same site, different DNS host.</p>
+</div>
+</div>
+
+<hr class="part">
+
+<div class="page">
+<h1>Part 2 &middot; From google.com to an address</h1>
+
+<div class="sec">
+<h2>Your computer asks one server, not many</h2>
+<div class="split70">
+<div class="seq">
+<svg viewBox="34 12 558 378" xmlns="http://www.w3.org/2000/svg">
+<defs><marker id="ar" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M2 1L8 5L2 9" fill="none" stroke="#6b6a64" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></marker></defs>
+<rect x="40" y="20" width="190" height="44" rx="8" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+<text class="t" x="135" y="42" text-anchor="middle" dominant-baseline="central" fill="#2C2C2A">Your browser</text>
+<rect x="40" y="84" width="190" height="268" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<text class="t" x="135" y="112" text-anchor="middle" dominant-baseline="central" fill="#26215C">The resolver</text>
+<text class="ts" x="135" y="132" text-anchor="middle" dominant-baseline="central" fill="#534AB7">does all the legwork</text>
+<rect x="270" y="90" width="300" height="52" rx="8" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.5"/>
+<circle cx="292" cy="116" r="9" fill="#534AB7"/>
+<text class="ts" x="292" y="116" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">1</text>
+<text class="t" x="312" y="107" dominant-baseline="central" fill="#26215C">Look in its own memory</text>
+<text class="ts" x="312" y="127" dominant-baseline="central" fill="#534AB7">if it's in here, it stops right now</text>
+<rect x="270" y="160" width="300" height="52" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<circle cx="292" cy="186" r="9" fill="#0F6E56"/>
+<text class="ts" x="292" y="186" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">2</text>
+<text class="t" x="312" y="177" dominant-baseline="central" fill="#04342C">Ask a root server</text>
+<text class="ts" x="312" y="197" dominant-baseline="central" fill="#0F6E56">go ask the .com servers</text>
+<rect x="270" y="230" width="300" height="52" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<circle cx="292" cy="256" r="9" fill="#0F6E56"/>
+<text class="ts" x="292" y="256" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">3</text>
+<text class="t" x="312" y="247" dominant-baseline="central" fill="#04342C">Ask a .com server</text>
+<text class="ts" x="312" y="267" dominant-baseline="central" fill="#0F6E56">go ask ns1.google.com</text>
+<rect x="270" y="300" width="300" height="52" rx="8" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<circle cx="292" cy="326" r="9" fill="#0F6E56"/>
+<text class="ts" x="292" y="326" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">4</text>
+<text class="t" x="312" y="317" dominant-baseline="central" fill="#04342C">Ask ns1.google.com</text>
+<text class="ts" x="312" y="337" dominant-baseline="central" fill="#0F6E56">it's at 142.250.72.14</text>
+<line x1="135" y1="64" x2="135" y2="78" stroke="#6b6a64" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="230" y1="116" x2="262" y2="116" stroke="#6b6a64" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="230" y1="186" x2="262" y2="186" stroke="#6b6a64" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="230" y1="256" x2="262" y2="256" stroke="#6b6a64" stroke-width="1.5" marker-end="url(#ar)"/>
+<line x1="230" y1="326" x2="262" y2="326" stroke="#6b6a64" stroke-width="1.5" marker-end="url(#ar)"/>
+<path d="M570 337 L590 337 L590 105 L578 105" fill="none" stroke="#a5a49c" stroke-width="1" stroke-dasharray="4 3" marker-end="url(#ar)"/>
+<text class="ts" x="570" y="378" text-anchor="end" fill="#8a8981">the answer is saved back into memory</text>
+</svg>
+</div>
+<div>
+<p>Your browser sends one question to one machine &mdash; a <strong>resolver</strong>, run by your internet provider, or a public one like <code>1.1.1.1</code>. It does the whole hunt and comes back with a single answer.</p>
+<p>Your computer never talks to the servers on the left.</p>
+<p><strong>It happens in that order, not all at once.</strong> The resolver can't ask the <code>.com</code> servers until the root tells it who they are, and can't ask <code>ns1.google.com</code> until <code>.com</code> names it. Each reply is what makes the next question askable.</p>
+</div>
+</div>
+</div>
+
+<div class="sec">
+<h2>What each level actually stores</h2>
+<p>The root reads the name right to left and only looks at the last part. Its whole list is the top-level domains &mdash; who runs <code>.com</code>, who runs <code>.org</code>. It has never heard of "google". The <code>.com</code> servers hold one line per <code>.com</code> domain, naming its nameservers.</p>
+<div class="lists">
+  <div class="lp">
+    <p class="lh">The root's list</p>
+    <p class="ls">one line per top-level domain &middot; about 1,500 lines</p>
+    <div class="r hit"><div class="k">com</div><div class="v">a.gtld-servers.net</div></div>
+    <div class="r"><div class="k">org</div><div class="v">a0.org.afilias-nst.info</div></div>
+    <div class="r"><div class="k">au</div><div class="v">q.au</div></div>
+    <p class="tag">Only reads the last part of the name.</p>
+  </div>
+  <div class="lgap">&rarr;</div>
+  <div class="lp">
+    <p class="lh">The <code>.com</code> registry's list</p>
+    <p class="ls">one line per .com domain &middot; about 160 million lines</p>
+    <div class="r hit"><div class="k">google.com</div><div class="v">ns1.google.com</div></div>
+    <div class="r"><div class="k">example.com</div><div class="v">ada.ns.cloudflare.com</div></div>
+    <div class="r"><div class="k">netflix.com</div><div class="v">ns-81.awsdns-10.com</div></div>
+    <p class="tag">The list from Part 1. Every line is a signpost someone pays for.</p>
+  </div>
+  <div class="lgap">&rarr;</div>
+  <div class="lp">
+    <p class="lh"><code>google.com</code>'s zone</p>
+    <p class="ls">everything about this one name</p>
+    <div class="r hit"><div class="k">google.com &nbsp;A</div><div class="v">142.250.72.14</div></div>
+    <div class="r"><div class="k">google.com &nbsp;MX</div><div class="v">smtp.google.com</div></div>
+    <div class="r"><div class="k">mail &nbsp;CNAME</div><div class="v">googlemail.l.google.com</div></div>
+    <p class="tag">The only list with a real address in it.</p>
+  </div>
+  <div class="say"><b>Reception:</b> "Don't know Sarah, but she's on floor 4."</div>
+  <div></div>
+  <div class="say"><b>Floor 4:</b> "Don't know her either. Try the design team."</div>
+  <div></div>
+  <div class="say"><b>Design team:</b> "Desk 12, by the window."</div>
+</div>
+<p><strong>One name, different answers.</strong> Big sites reply with a different address depending on where you're asking from, so you get sent to a machine near you. Two people, two answers, both correct.</p>
+<div class="eg" style="margin-bottom:9px">google.com from Sydney &rarr; 142.250.66.238<br>google.com from London &rarr; 142.250.200.14</div>
+<p>Each level knows only who to ask next. That middle list is the registry from Part 1: the signpost you rent is one line in it, and this is where it gets read.</p>
+</div>
+
+</div>
+
+<hr class="part">
+
+<div class="page last">
+<h1>Part 3 &middot; Why it's fast, and why changes take time</h1>
+
+<div class="sec">
+<h2>What happens to a saved answer</h2>
+<div class="strip">
+  <div class="st"><p class="tm">10:00</p><p class="hd">First person asks</p><p class="bd">Memory is empty, so the resolver does the full walk: root, then <code>.com</code>, then your nameservers.</p><span class="sp slow">slow &middot; ~200ms</span></div>
+  <div class="gp">&rarr;</div>
+  <div class="st"><p class="tm">10:00 &ndash; 11:00</p><p class="hd">Everyone else asks</p><p class="bd">Handed the saved copy straight from memory. No walk at all, however many people ask.</p><span class="sp fast">instant</span></div>
+  <div class="gp">&rarr;</div>
+  <div class="st warnbox"><p class="tm">11:00</p><p class="hd">The hour is up</p><p class="bd">The copy is thrown away, and that is <strong>all</strong> that happens. Nothing is fetched &mdash; the resolver just has nothing to hand out.</p></div>
+  <div class="gp">&rarr;</div>
+  <div class="st"><p class="tm">11:07</p><p class="hd">Next person asks</p><p class="bd">Full walk again, and this time it reads whatever your zone says <em>now</em>. Your new address. Saved for another hour.</p><span class="sp slow">slow &middot; ~200ms</span></div>
+</div>
+<p class="muted">That hour is the record's <strong>TTL</strong> &mdash; a number you set yourself, on each record. One hour is just this example; Google's A record is 300 seconds.</p>
+</div>
+
+<div class="sec">
+<h2>Every resolver has its own clock</h2>
+<p>The same four steps, plus a second resolver that happened to start its hour 25 minutes later.</p>
+<div class="seq" style="max-width:660px">
+<svg viewBox="0 0 680 222" xmlns="http://www.w3.org/2000/svg">
+<rect x="517" y="66" width="104" height="98" fill="#FDF7EC"/>
+
+<text class="ts" x="14" y="82" dominant-baseline="central" fill="#2C2C2A" font-weight="500">Your resolver</text>
+<text class="ts" x="14" y="96" dominant-baseline="central" fill="#8a8981">1.1.1.1</text>
+<text class="ts" x="14" y="134" dominant-baseline="central" fill="#2C2C2A" font-weight="500">Their resolver</text>
+<text class="ts" x="14" y="148" dominant-baseline="central" fill="#8a8981">their ISP's</text>
+
+<circle cx="136" cy="54" r="8" fill="#534AB7"/><text class="ts" x="136" y="54" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">1</text>
+<rect x="158" y="47" width="298" height="14" rx="7" fill="#EEEDFE" stroke="#534AB7" stroke-width="0.8"/><text class="ts" x="307" y="54" text-anchor="middle" dominant-baseline="central" fill="#534AB7">2</text>
+<circle cx="473" cy="54" r="8" fill="#BA7517"/><text class="ts" x="473" y="54" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">3</text>
+<circle cx="521" cy="54" r="8" fill="#534AB7"/><text class="ts" x="521" y="54" text-anchor="middle" dominant-baseline="central" fill="#FFFFFF">4</text>
+
+<rect x="130" y="72" width="347" height="32" rx="4" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+<text class="ts" x="228" y="88" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">saved copy &mdash; old address</text>
+<rect x="477" y="72" width="40" height="32" rx="4" fill="#FFFFFF" stroke="#854F0B" stroke-width="1.1" stroke-dasharray="3 2.5"/>
+<rect x="517" y="72" width="133" height="32" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+<text class="ts" x="583" y="88" text-anchor="middle" dominant-baseline="central" fill="#0F6E56">new address</text>
+
+<rect x="274" y="124" width="347" height="32" rx="4" fill="#F1EFE8" stroke="#B4B2A9" stroke-width="0.5"/>
+<text class="ts" x="447" y="140" text-anchor="middle" dominant-baseline="central" fill="#5F5E5A">saved copy &mdash; old address</text>
+<rect x="621" y="124" width="29" height="32" rx="4" fill="#E1F5EE" stroke="#0F6E56" stroke-width="0.5"/>
+
+<line x1="303" y1="42" x2="303" y2="170" stroke="#BA7517" stroke-width="1" stroke-dasharray="4 3"/>
+<text class="ts" x="303" y="32" text-anchor="middle" fill="#854F0B">you change the record here</text>
+
+<line x1="130" y1="176" x2="650" y2="176" stroke="#d8d6cd" stroke-width="1"/>
+<text class="ts" x="130" y="192" text-anchor="middle" fill="#8a8981">10:00</text>
+<text class="ts" x="303" y="192" text-anchor="middle" fill="#8a8981">10:30</text>
+<text class="ts" x="477" y="192" text-anchor="middle" fill="#8a8981">11:00</text>
+<text class="ts" x="650" y="192" text-anchor="middle" fill="#8a8981">11:30</text>
+<text class="ts" x="569" y="212" text-anchor="middle" fill="#854F0B" font-weight="500">new for you, still old for them</text>
+</svg>
+</div>
+</div>
+
+<div class="sec cols">
+<div class="warn">
+<p style="margin:0"><strong>"Propagation" isn't really a thing.</strong> Nothing gets pushed out across the internet. You're waiting for other people's copies to run out the clock. Drop the TTL the day <em>before</em> a change and the wait shrinks from an hour to minutes.</p>
+</div>
+<div>
+<h2>Try it yourself</h2>
+<pre>$ dig +short google.com
+142.250.72.14
+
+$ dig +short NS google.com
+ns1.google.com.
+ns2.google.com.</pre>
+</div>
+</div>
+
+</div>

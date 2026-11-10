@@ -1,0 +1,38 @@
+/* Print sizing and page control for explainer sheets.
+   Screen CSS stays comfortable to read; this block compresses for paper.
+   Set --zoom via the body rule at the bottom once measured. */
+
+@page { size: A4; margin: 10mm 12mm 8mm 12mm; }
+/* landscape: @page { size: A4 landscape; margin: 10mm 12mm 8mm 12mm; } */
+
+@media print {
+  body { font-size: 9pt; line-height: 1.42; max-width: none; padding: 0; margin: 0; }
+  h1 { font-size: 15pt; margin-bottom: 1mm; }
+  h2 { font-size: 9.8pt; margin-bottom: 1.6mm; padding-bottom: 1mm; }
+  .sub { font-size: 8.6pt; margin-bottom: 3mm; }
+  .sec { margin-bottom: 2.6mm; }
+  p { margin-bottom: 1.6mm; }
+  li { margin-bottom: 1.2mm; }
+  code { font-size: 8.3pt; }
+  pre { font-size: 8.4pt; padding: 1.8mm 2.2mm; line-height: 1.4; }
+  table { font-size: 8.8pt; }
+  th { padding: 1mm 1.5mm; }
+  td { padding: 0.9mm 1.5mm; }
+  .eg { font-size: 7.7pt; }
+
+  /* Never split a figure across a page. */
+  figure, .seq, .strip, .zones, .lists, .flow, .warn, table, pre {
+    break-inside: avoid; page-break-inside: avoid;
+  }
+  /* Never strand a heading at the foot of a page. */
+  h1, h2, h3 { break-after: avoid; page-break-after: avoid; }
+
+  /* Forced section breaks waste a lot of space. Turn them on only if each
+     part must start a fresh page; otherwise let content flow. */
+  .page { break-after: auto; page-break-after: auto; }
+
+  /* Global scale. Sweep this to find the largest size that fits the budget
+     (scripts/measure_pages.py --sweep). Raise it when printing 2-up, where
+     each page is reduced to about 71%. */
+  body { zoom: 1.0; }
+}

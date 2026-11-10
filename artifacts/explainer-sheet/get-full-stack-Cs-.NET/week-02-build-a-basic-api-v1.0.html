@@ -1,0 +1,836 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Build a Basic API</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Literata:opsz,wght@7..72,400;7..72,600&display=swap">
+
+<style>
+:root{
+  --ground:#E9EDF1; --paper:#FFFFFF; --tint:#EEF1F5;
+  --ink:#0E141B; --ink-2:#3E4B58; --ink-3:#6B7885;
+  --rule:#D8DFE6; --rule-2:#BFC9D3;
+  --fe:#1C6EA4;   --fe-bg:#E5EFF6;  --fe-rule:#B2D2E5;
+  --be:#A25520;   --be-bg:#F8EDE3;  --be-rule:#E3C5AB;
+  --flag:#9E2A36; --flag-bg:#FAE9EB; --flag-rule:#E4BDC2;
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --ground:#0A0E13; --paper:#141B23; --tint:#1B232D;
+    --ink:#E6EBF1; --ink-2:#A6B2BF; --ink-3:#78848F;
+    --rule:#28313C; --rule-2:#3A444F;
+    --fe:#68B5E1; --fe-bg:#102230; --fe-rule:#26536E;
+    --be:#E3934F; --be-bg:#291B10; --be-rule:#6A4A2B;
+    --flag:#E38391; --flag-bg:#2A1418; --flag-rule:#6B303A;
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0A0E13; --paper:#141B23; --tint:#1B232D;
+  --ink:#E6EBF1; --ink-2:#A6B2BF; --ink-3:#78848F;
+  --rule:#28313C; --rule-2:#3A444F;
+  --fe:#68B5E1; --fe-bg:#102230; --fe-rule:#26536E;
+  --be:#E3934F; --be-bg:#291B10; --be-rule:#6A4A2B;
+  --flag:#E38391; --flag-bg:#2A1418; --flag-rule:#6B303A;
+}
+
+*{box-sizing:border-box;}
+body{margin:0;padding:24px 12px 48px;background:var(--ground);color:var(--ink);font-family:Literata,Georgia,serif;-webkit-font-smoothing:antialiased;}
+h1,h2,h3,h4{font-family:"Instrument Sans","Helvetica Neue",Arial,sans-serif;text-wrap:balance;margin:0;}
+code,.mono{font-family:"JetBrains Mono",ui-monospace,Menlo,Consolas,monospace;}
+
+/* ---------- one continuous document ---------- */
+.deck{
+  width:210mm;margin:0 auto;background:var(--paper);color:var(--ink);
+  padding:15mm 14mm 12mm;border:1px solid var(--rule);
+  box-shadow:0 2px 4px rgba(14,20,27,.06),0 18px 44px -26px rgba(14,20,27,.4);
+  display:flex;flex-direction:column;gap:17mm;
+  font-size:10.4px;line-height:1.55;
+}
+.sheet{display:flex;flex-direction:column;gap:4.4mm;}
+@media screen and (max-width:860px){
+  body{padding:0;}
+  .deck{width:100%;padding:22px 18px 40px;border:none;box-shadow:none;font-size:13.5px;gap:40px;}
+}
+@media print{
+  @page{size:A4;margin:15mm 14mm 16mm;}
+  body{background:#fff;padding:0;}
+  .deck{
+    width:auto;margin:0;padding:0;border:none;box-shadow:none;gap:13mm;
+    -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  }
+  :root{
+    --ground:#fff;--paper:#fff;--tint:#F1F4F7;--ink:#0E141B;--ink-2:#3E4B58;--ink-3:#6B7885;
+    --rule:#D8DFE6;--rule-2:#BFC9D3;
+    --fe:#1C6EA4;--fe-bg:#E5EFF6;--fe-rule:#B2D2E5;
+    --be:#A25520;--be-bg:#F8EDE3;--be-rule:#E3C5AB;
+    --flag:#9E2A36;--flag-bg:#FAE9EB;--flag-rule:#E4BDC2;
+  }
+  /* never split an idea across a page break */
+  figure,.note,.fix,.rule,.vocab,.xl8,.strip,.def,pre,table,.goalbar,.bridge,.head{break-inside:avoid;}
+  .blk-h,h1,h2,h3{break-after:avoid;}
+  .cols,.defs{break-inside:auto;}
+}
+
+/* ---------- masthead ---------- */
+.head{display:flex;flex-direction:column;gap:2mm;border-bottom:1.5pt solid var(--ink);padding-bottom:2.6mm;}
+.kicker{font-family:"JetBrains Mono",monospace;font-size:8.2px;font-weight:500;letter-spacing:.19em;text-transform:uppercase;color:var(--ink-3);}
+h1{font-size:27px;font-weight:700;letter-spacing:-.028em;line-height:1.03;}
+.thesis{font-size:11.6px;color:var(--ink-2);max-width:72ch;margin:0;}
+.thesis b{color:var(--ink);font-weight:600;}
+.goalbar{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:10px;align-items:baseline;
+  background:var(--tint);border-left:2pt solid var(--rule-2);padding:2.2mm 3mm;font-size:9.7px;color:var(--ink-2);
+}
+.goalbar b{font-family:"JetBrains Mono",monospace;font-size:8px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);font-weight:700;white-space:nowrap;}
+
+/* ---------- blocks ---------- */
+.blk{display:flex;flex-direction:column;gap:2mm;}
+.blk-h{display:flex;align-items:baseline;gap:7px;border-bottom:1px solid var(--rule);padding-bottom:1.2mm;}
+.num{font-family:"JetBrains Mono",monospace;font-size:9.6px;font-weight:700;color:var(--be);background:var(--be-bg);border:1px solid var(--be-rule);border-radius:2px;padding:0 5px;line-height:1.5;}
+.lbl{font-family:"JetBrains Mono",monospace;font-size:7.8px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);border:1px solid var(--rule-2);border-radius:2px;padding:.6mm 5px;}
+.blk-h h2{font-size:14px;font-weight:700;letter-spacing:-.017em;}
+.blk-h .sub{font-family:"JetBrains Mono",monospace;font-size:8px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3);margin-left:auto;white-space:nowrap;}
+.blk p{margin:0;font-size:10.3px;color:var(--ink-2);max-width:84ch;}
+.blk p strong,.pts strong,.defs strong{color:var(--ink);font-weight:600;}
+.claim{font-size:11px!important;color:var(--ink)!important;}
+
+.pts{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:1.4mm;}
+.pts li{position:relative;padding-left:4mm;font-size:10.1px;color:var(--ink-2);line-height:1.5;}
+.pts li::before{content:"";position:absolute;left:0;top:.66em;width:2.2mm;height:1px;background:var(--rule-2);}
+
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:5mm;align-items:start;}
+.full{grid-column:1/-1;}
+@media screen and (max-width:860px){.cols{grid-template-columns:1fr;gap:16px;}}
+
+code{background:var(--tint);border:1px solid var(--rule);border-radius:2px;padding:0 .3em;font-size:.87em;color:var(--ink);}
+pre{margin:0;background:var(--tint);border:1px solid var(--rule);border-radius:2px;padding:2mm 2.6mm;overflow-x:auto;}
+pre code{background:none;border:none;padding:0;font-size:9.3px;line-height:1.65;display:block;white-space:pre;}
+.cmt{color:var(--ink-3);}
+
+/* ---------- section bridge ---------- */
+.bridge{
+  display:grid;grid-template-columns:auto minmax(0,1fr);gap:8px;align-items:baseline;
+  border-top:1px solid var(--rule-2);padding-top:1.8mm;margin-top:.6mm;
+}
+.bridge b{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;color:var(--be);line-height:1;}
+.bridge i{font-style:italic;font-size:10.2px;color:var(--ink-2);}
+
+/* ---------- preview chip ---------- */
+.chip{
+  display:inline-block;font-family:"JetBrains Mono",monospace;font-size:7.4px;font-weight:700;
+  letter-spacing:.13em;text-transform:uppercase;color:var(--fe);background:var(--fe-bg);
+  border:1px solid var(--fe-rule);border-radius:2px;padding:.3mm 4px;vertical-align:.12em;margin-right:4px;
+}
+
+/* ---------- definition cards ---------- */
+.defs{display:grid;grid-template-columns:1fr 1fr;gap:3mm;}
+@media screen and (max-width:860px){.defs{grid-template-columns:1fr;}}
+.def{border:1px solid var(--rule);background:var(--paper);border-radius:3px;padding:2.4mm 2.8mm;display:flex;flex-direction:column;gap:1.2mm;}
+.def-h{display:flex;align-items:baseline;gap:6px;flex-wrap:wrap;}
+.def-h b{font-family:"JetBrains Mono",monospace;font-size:10.4px;font-weight:700;color:var(--be);}
+.def-h span{font-family:"JetBrains Mono",monospace;font-size:8px;color:var(--ink-3);margin-left:auto;white-space:nowrap;}
+.def p{margin:0;font-size:9.8px;color:var(--ink-2);line-height:1.48;max-width:none;}
+.def .fe{font-size:9.4px;color:var(--fe);font-style:italic;}
+.def .files{font-family:"JetBrains Mono",monospace;font-size:8.6px;color:var(--ink-3);line-height:1.5;}
+
+/* ---------- vocabulary rows ---------- */
+.vocab{display:grid;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:var(--paper);}
+.vrow{display:grid;grid-template-columns:118px minmax(0,1fr);gap:3mm;padding:2mm 2.8mm;border-top:1px solid var(--rule);align-items:baseline;}
+.vrow:first-child{border-top:none;}
+.vrow b{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:700;color:var(--be);}
+.vrow p{margin:0;font-size:9.9px;color:var(--ink-2);line-height:1.48;max-width:none;}
+.vrow p em{font-style:italic;color:var(--fe);}
+@media screen and (max-width:860px){.vrow{grid-template-columns:1fr;gap:1mm;}}
+
+/* ---------- tables ---------- */
+.tbl{width:100%;border-collapse:collapse;border:1px solid var(--rule);background:var(--paper);}
+.tbl th,.tbl td{text-align:left;padding:1.5mm 2.4mm;border-top:1px solid var(--rule);font-size:9.6px;vertical-align:top;}
+.tbl thead th{border-top:none;background:var(--tint);font-family:"JetBrains Mono",monospace;font-size:7.9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:500;}
+.tbl tbody th{font-family:"JetBrains Mono",monospace;font-weight:700;color:var(--be);white-space:nowrap;}
+.tbl td{color:var(--ink-2);}
+.tbl td.hi{color:var(--flag);font-family:"JetBrains Mono",monospace;font-weight:700;}
+.tbl td.st{font-family:"JetBrains Mono",monospace;font-weight:700;color:var(--ink);}
+
+/* ---------- figures ---------- */
+figure{margin:0;border:1px solid var(--rule);background:var(--tint);border-radius:3px;padding:3mm 3mm 2.2mm;display:flex;flex-direction:column;gap:2mm;}
+figure svg{display:block;width:100%;max-width:100%;height:auto;}
+figcaption{font-size:9.7px;color:var(--ink-2);line-height:1.45;border-top:1px solid var(--rule);padding-top:1.6mm;}
+figcaption b{color:var(--ink);font-weight:600;font-family:"Instrument Sans",sans-serif;}
+figcaption + figcaption{border-top:none;padding-top:0;}
+
+/* ---------- two-world rows ---------- */
+.xl8{display:grid;border:1px solid var(--rule);border-radius:2px;overflow:hidden;background:var(--paper);}
+.xr{display:grid;grid-template-columns:minmax(0,1fr) 6mm minmax(0,1fr);border-top:1px solid var(--rule);align-items:center;}
+.xr:first-child{border-top:none;}
+.xr>div{padding:1.3mm 2.6mm;font-family:"JetBrains Mono",monospace;font-size:8.9px;line-height:1.4;}
+.xr .a{background:var(--fe-bg);color:var(--fe);}
+.xr .b{background:var(--be-bg);color:var(--be);}
+.xr .m{text-align:center;color:var(--ink-3);font-size:8.2px;padding:0;}
+.xr.hd>div{background:var(--tint);color:var(--ink-3);font-size:7.9px;letter-spacing:.13em;text-transform:uppercase;}
+
+/* ---------- callouts ---------- */
+.note{border-left:2pt solid var(--fe-rule);background:var(--fe-bg);padding:2mm 2.8mm;}
+.note p{margin:0;font-size:9.7px;color:var(--ink-2);line-height:1.45;max-width:none;}
+.note p + p{margin-top:1.2mm;}
+.note b{color:var(--fe);font-family:"Instrument Sans",sans-serif;font-weight:600;font-size:10px;}
+.rule{border:1px solid var(--be-rule);background:var(--be-bg);border-radius:2px;padding:2.2mm 2.8mm;}
+.rule p{margin:0;font-size:10px;color:var(--ink-2);line-height:1.48;max-width:none;}
+.rule b{color:var(--be);font-family:"Instrument Sans",sans-serif;font-weight:600;}
+.fix{border:1px solid var(--flag-rule);background:var(--flag-bg);border-radius:2px;padding:2.2mm 2.8mm;}
+.fix p{margin:0;font-size:9.7px;color:var(--ink-2);line-height:1.45;max-width:none;}
+.fix b{color:var(--flag);font-family:"Instrument Sans",sans-serif;font-weight:600;}
+
+/* ---------- strip ---------- */
+.strip{display:grid;grid-template-columns:repeat(2,1fr);border:1px solid var(--rule);border-radius:2px;overflow:hidden;background:var(--paper);}
+.strip div{padding:2.2mm 2.6mm;border-left:1px solid var(--rule);}
+.strip div:first-child{border-left:none;}
+.strip b{font-family:"Instrument Sans",sans-serif;font-size:9.9px;font-weight:600;color:var(--ink);display:block;margin-bottom:.8mm;}
+.strip p{margin:0;font-size:9.2px;color:var(--ink-2);line-height:1.42;}
+@media screen and (max-width:860px){.strip{grid-template-columns:1fr;} .strip div{border-left:none;border-top:1px solid var(--rule);} .strip div:first-child{border-top:none;}}
+
+.foot{
+  border-top:1px solid var(--rule);padding-top:2.6mm;
+  font-family:"JetBrains Mono",monospace;font-size:7.6px;letter-spacing:.09em;color:var(--ink-3);
+  display:flex;justify-content:space-between;gap:10px;
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important;}}
+
+/* ---------- week 2 additions ---------- */
+.steps{display:grid;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:var(--paper);}
+.step{display:grid;grid-template-columns:7mm minmax(0,1fr) 34mm 10mm;gap:3mm;align-items:baseline;padding:1.7mm 2.8mm;border-top:1px solid var(--rule);}
+.step:first-child{border-top:none;}
+.step .n{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:700;color:var(--be);}
+.step .w b{font-family:"Instrument Sans",sans-serif;font-size:10.2px;font-weight:600;color:var(--ink);}
+.step .w span{font-size:9.6px;color:var(--ink-2);}
+.step .w small{display:block;font-size:8.8px;color:var(--ink-3);font-family:"JetBrains Mono",monospace;margin-top:.4mm;}
+.step .p{font-family:"JetBrains Mono",monospace;font-size:8.4px;color:var(--ink-3);}
+.step .s{font-family:"JetBrains Mono",monospace;font-size:8.4px;color:var(--be);text-align:right;}
+.tbl td code,.tbl th code{font-size:.92em;}
+.tbl .eg{display:block;font-family:"JetBrains Mono",monospace;font-size:8.6px;color:var(--ink-3);margin-top:.5mm;}
+
+.strip3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid var(--rule);border-radius:2px;overflow:hidden;background:var(--paper);}
+.strip3>div{padding:2.2mm 2.6mm;border-left:1px solid var(--rule);display:flex;flex-direction:column;gap:1.2mm;}
+.strip3>div:first-child{border-left:none;}
+.strip3 b{font-family:"Instrument Sans",sans-serif;font-size:10px;font-weight:600;color:var(--ink);}
+.strip3 p{margin:0;font-size:9.2px;color:var(--ink-2);line-height:1.42;}
+.strip3 pre code{font-size:8.2px;}
+.strip3 .bad{background:var(--flag-bg);}
+.strip3 .bad b{color:var(--flag);}
+.res{font-family:"JetBrains Mono",monospace;font-size:8.4px;font-weight:700;border-radius:2px;padding:.6mm 1.6mm;align-self:flex-start;}
+.res.ok{color:#1E6B3A;background:#E3F2E8;border:1px solid #B5DBC1;}
+.res.no{color:var(--flag);background:var(--paper);border:1px solid var(--flag-rule);}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .res.ok{color:#7FD19B;background:#10261A;border-color:#2B5A3A;}}
+@media screen and (max-width:860px){.strip3{grid-template-columns:1fr;}.strip3>div{border-left:none;border-top:1px solid var(--rule);}.strip3>div:first-child{border-top:none;}}
+.code2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:3mm;align-items:stretch;}
+.code2>div{display:flex;flex-direction:column;gap:1mm;}
+.code2 h4{font-family:"JetBrains Mono",monospace;font-size:7.9px;letter-spacing:.13em;text-transform:uppercase;color:var(--ink-3);font-weight:500;}
+.code2 pre{flex:1;}
+@media screen and (max-width:860px){.code2{grid-template-columns:1fr;}}
+.kw{color:var(--be);font-weight:700;}
+.ty{color:var(--fe);}
+.hl{background:var(--be-bg);outline:1px solid var(--be-rule);}
+.seq{display:grid;border:1px solid var(--rule);border-radius:3px;overflow:hidden;background:var(--paper);}
+.seq>div{display:grid;grid-template-columns:4mm 19mm minmax(0,1fr);gap:2.6mm;align-items:baseline;padding:1.6mm 2.8mm;border-top:1px solid var(--rule);}
+.seq>div:first-child{border-top:none;}
+.seq .n{font-family:"JetBrains Mono",monospace;font-size:10px;font-weight:700;color:var(--be);}
+.seq .p{font-family:"JetBrains Mono",monospace;font-size:8.4px;color:var(--ink-3);}
+.seq p{margin:0;font-size:9.7px;color:var(--ink-2);line-height:1.45;max-width:none;}
+.seq .done{background:var(--tint);}
+code,pre{font-variant-ligatures:none;}
+.code2>div{break-inside:avoid;}
+.code2 h4{break-after:avoid;}
+.code2 .vrow{grid-template-columns:1fr;gap:.6mm;padding:1.6mm 2.6mm;}
+@media print{ .deck{gap:5mm !important;} }
+</style>
+
+<div class="deck">
+<!-- ============================================ PAGE 1 -->
+<div class="sheet">
+
+  <div class="head sec">
+    <div class="kicker">Backend Ramp · Session 02 · 18 Sep 2026</div>
+    <h1>Build a Basic API</h1>
+    <p class="thesis">Week 1 read an existing service. Week 2 built one from an empty folder: <b>Hello</b>, a .NET 10 API with three endpoints, four projects and an in-memory list of people. This sheet is the <b>recipe to rebuild it</b>, with the C# you meet on the way.</p>
+  </div>
+
+  <div class="goalbar">
+    <b>Homework</b>
+    <span>Rebuild Hello without the recording, using the order at the bottom of this page, then add one endpoint of your own.</span>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="lbl">Start here</span><h2>What we built</h2><span class="sub">One request, every layer</span></div>
+
+    <figure>
+      <svg viewBox="0 0 760 230" role="img" aria-label="A client calls PeopleEndpoint in Hello.Api, which calls PeopleService in Hello.Application through the IPeopleService interface, which calls InMemoryPeopleRepository in Hello.Infrastructure through the IPeopleRepository interface. The interfaces and the Person class live in Hello.Domain.">
+        <defs>
+          <marker id="a1" markerWidth="8" markerHeight="8" refX="6.6" refY="2.8" orient="auto"><path d="M0,0 L6.4,2.8 L0,5.6 z" fill="currentColor"/></marker>
+          <marker id="a1b" markerWidth="8" markerHeight="8" refX="6.6" refY="2.8" orient="auto"><path d="M0,0 L6.4,2.8 L0,5.6 z" fill="var(--be)"/></marker>
+        </defs>
+
+        <!-- client -->
+        <rect x="2" y="34" width="84" height="88" rx="4" fill="var(--fe-bg)" stroke="var(--fe)" stroke-width="1.2"/>
+        <text x="44" y="62" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="11.5" font-weight="700" fill="var(--fe)">Client</text>
+        <text x="44" y="80" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.4" fill="var(--fe)">curl, browser</text>
+        <text x="44" y="92" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.4" fill="var(--fe)">or Rider's</text>
+        <text x="44" y="104" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.4" fill="var(--fe)">.http file</text>
+
+        <!-- layer labels -->
+        <text x="180" y="22" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="currentColor" opacity=".6">Hello.Api</text>
+        <text x="420" y="22" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="currentColor" opacity=".6">Hello.Application</text>
+        <text x="678" y="22" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="currentColor" opacity=".6">Hello.Infrastructure</text>
+
+        <!-- api -->
+        <rect x="114" y="34" width="132" height="88" rx="4" fill="var(--paper)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="180" y="58" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.4" font-weight="700" fill="currentColor">PeopleEndpoint</text>
+        <text x="180" y="78" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">the front door:</text>
+        <text x="180" y="91" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">route, read the request,</text>
+        <text x="180" y="104" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">send the response</text>
+
+        <!-- application -->
+        <rect x="354" y="34" width="132" height="88" rx="4" fill="var(--paper)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="420" y="58" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="10.4" font-weight="700" fill="currentColor">PeopleService</text>
+        <text x="420" y="78" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">the rules:</text>
+        <text x="420" y="91" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">none yet, so it passes</text>
+        <text x="420" y="104" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">calls straight through</text>
+
+        <!-- infrastructure -->
+        <rect x="594" y="34" width="164" height="88" rx="4" fill="var(--paper)" stroke="currentColor" stroke-width="1.2"/>
+        <text x="676" y="58" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9.6" font-weight="700" fill="currentColor">InMemoryPeopleRepository</text>
+        <text x="676" y="78" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">the plumbing: a</text>
+        <text x="676" y="91" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" fill="currentColor" opacity=".75">List&lt;Person&gt;</text>
+        <text x="676" y="104" text-anchor="middle" font-family="Instrument Sans, sans-serif" font-size="9.4" fill="currentColor" opacity=".75">standing in for a database</text>
+
+        <!-- calls -->
+        <line x1="88" y1="64" x2="110" y2="64" stroke="currentColor" stroke-width="1.3" marker-end="url(#a1)"/>
+        <line x1="112" y1="96" x2="90" y2="96" stroke="var(--fe)" stroke-width="1.3" stroke-dasharray="3 2" marker-end="url(#a1)"/>
+        <line x1="248" y1="78" x2="350" y2="78" stroke="var(--be)" stroke-width="1.4" marker-end="url(#a1b)"/>
+        <text x="299" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.8" font-weight="700" fill="var(--be)">IPeopleService</text>
+        <line x1="488" y1="78" x2="590" y2="78" stroke="var(--be)" stroke-width="1.4" marker-end="url(#a1b)"/>
+        <text x="539" y="70" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.8" font-weight="700" fill="var(--be)">IPeopleRepository</text>
+
+        <!-- domain band -->
+        <rect x="114" y="146" width="644" height="66" rx="4" fill="var(--be-bg)" stroke="var(--be)" stroke-width="1.4"/>
+        <text x="128" y="164" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="var(--be)">Hello.Domain</text>
+        <text x="128" y="177" font-family="Instrument Sans, sans-serif" font-size="9" fill="var(--be)">nouns + contracts</text>
+        <text x="128" y="189" font-family="Instrument Sans, sans-serif" font-size="9" fill="var(--be)">references nothing</text>
+
+        <rect x="244" y="168" width="110" height="26" rx="3" fill="var(--paper)" stroke="var(--be)" stroke-width="1.1"/>
+        <text x="299" y="185" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="var(--be)">IPeopleService</text>
+        <rect x="478" y="168" width="122" height="26" rx="3" fill="var(--paper)" stroke="var(--be)" stroke-width="1.1"/>
+        <text x="539" y="185" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="var(--be)">IPeopleRepository</text>
+        <rect x="642" y="168" width="104" height="26" rx="3" fill="var(--paper)" stroke="var(--be)" stroke-width="1.1"/>
+        <text x="694" y="185" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="9" font-weight="700" fill="var(--be)">Person</text>
+
+        <line x1="299" y1="84" x2="299" y2="166" stroke="var(--be)" stroke-width="1" stroke-dasharray="2 3"/>
+        <line x1="539" y1="84" x2="539" y2="166" stroke="var(--be)" stroke-width="1" stroke-dasharray="2 3"/>
+
+        <!-- implements -->
+        <path d="M420 124 L420 138 L330 138 L330 164" fill="none" stroke="currentColor" stroke-width="1" opacity=".55" marker-end="url(#a1)"/>
+        <text x="426" y="135" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".6">implements</text>
+        <path d="M676 124 L676 138 L572 138 L572 164" fill="none" stroke="currentColor" stroke-width="1" opacity=".55" marker-end="url(#a1)"/>
+        <text x="682" y="135" font-family="JetBrains Mono, monospace" font-size="8" fill="currentColor" opacity=".6">implements</text>
+
+        <text x="44" y="136" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.2" fill="var(--fe)">JSON back</text>
+        <text x="436" y="226" text-anchor="middle" font-family="JetBrains Mono, monospace" font-size="8.6" fill="currentColor" opacity=".7">amber = declared in Domain · each call goes through an interface, never a class name</text>
+      </svg>
+      <figcaption><b>Each layer knows only the interface in front of it.</b> <code>PeopleEndpoint</code> asks for an <code>IPeopleService</code> and never names <code>PeopleService</code>. Swapping the list for a real database is one new class in Infrastructure and one changed line in <code>Program.cs</code>: Week 1's <i>inversion</i>, at its smallest.</figcaption>
+    </figure>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><h2>The three endpoints</h2><span class="sub">Real responses from the finished API</span></div>
+    <table class="tbl">
+      <thead><tr><th>Request</th><th>Endpoint class · base class</th><th>Response</th></tr></thead>
+      <tbody>
+        <tr><th>GET /hello?name=Elly</th><td><code>HelloEndpoint</code> · <code>Endpoint&lt;HelloRequest, string&gt;</code></td><td class="st">"Hello, Elly"</td></tr>
+        <tr><th>GET /people</th><td><code>PeopleEndpoint</code> · <code>EndpointWithoutRequest&lt;IEnumerable&lt;Person&gt;&gt;</code></td><td class="st">[{"name":"John","age":20},<br>&nbsp;{"name":"Jane","age":21}]<span class="eg">C# Name → JSON name: camelCase both ways</span></td></tr>
+        <tr><th>POST /people</th><td><code>AddPersonEndpoint</code> · <code>Endpoint&lt;AddPersonRequest, string&gt;</code><span class="eg">body: {"name":"Mary","age":30}</span></td><td class="st">"Person added"</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><h2>Rebuild order</h2><span class="sub">Get it running, then build inside-out</span></div>
+    <table class="tbl">
+      <thead><tr><th>#</th><th>Do</th><th>Done when</th><th>See</th></tr></thead>
+      <tbody>
+        <tr><th>1</th><td>New <b>ASP.NET Core Web API</b> on .NET 10. Run it untouched.</td><td class="st">/weatherforecast → 200</td><td>§01</td></tr>
+        <tr><th>2</th><td>Install FastEndpoints, write <code>HelloEndpoint</code>, delete the weather sample.</td><td class="st">/hello?name=Elly → "Hello, Elly"</td><td>§02</td></tr>
+        <tr><th>3</th><td>Add Application, Domain, Infrastructure as <b>class libraries</b>; add references.</td><td class="st">dotnet build → 4 projects</td><td>§04</td></tr>
+        <tr><th>4</th><td>Domain: <code>Person</code>, <code>IPeopleService</code>, <code>IPeopleRepository</code>.</td><td class="st">builds</td><td>§04</td></tr>
+        <tr><th>5</th><td><code>PeopleService</code> in Application; <code>InMemoryPeopleRepository</code> in Infrastructure.</td><td class="st">builds</td><td>§05</td></tr>
+        <tr><th>6</th><td>Register both in <code>Program.cs</code> with <code>AddSingleton</code>.</td><td class="st">app starts</td><td>§05</td></tr>
+        <tr><th>7</th><td><code>PeopleEndpoint</code>, <code>AddPersonEndpoint</code>. <b>Restart</b> to pick them up.</td><td class="st">POST Mary · GET → 3 people</td><td>§08</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ============================================ PAGE 2 -->
+<div class="sheet">
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">01</span><h2>Template to running</h2><span class="sub">Rebuild step 1</span></div>
+    <p>In Rider: <b>New Solution → ASP.NET Core Web API</b>, <code>net10.0</code>, C#. Or the CLI, which also makes the <code>.gitignore</code> to add before your first commit:</p>
+    <pre><code>dotnet new sln -n Hello           <span class="cmt"># Hello.slnx: workspace root (.slnx is new in .NET 10)</span>
+dotnet new webapi -n Hello.Api     <span class="cmt"># the only project that runs</span>
+dotnet sln add Hello.Api
+dotnet new gitignore               <span class="cmt"># ignores bin/ and obj/, the build output</span>
+dotnet run --project Hello.Api     <span class="cmt"># then GET http://localhost:&lt;port&gt;/weatherforecast</span></code></pre>
+
+    <p class="claim"><code>Program.cs</code> is the whole app, and it has two halves. Everything before <code>Build()</code> registers what exists. Everything after it sets up what happens to each request.</p>
+    <div class="code2">
+      <div>
+        <h4>The template, trimmed</h4>
+        <pre><code><span class="kw">var</span> builder = WebApplication.CreateBuilder(args);
+<span class="cmt">// 1 · REGISTER: what exists (the container)</span>
+builder.Services.AddOpenApi();
+
+<span class="kw">var</span> app = builder.Build();
+
+<span class="cmt">// 2 · PIPELINE: what each request passes through</span>
+<span class="kw">if</span> (app.Environment.IsDevelopment())
+    app.MapOpenApi();
+app.UseHttpsRedirection();
+app.MapGet(<span class="ty">"/weatherforecast"</span>, () =&gt; { ... });
+app.Run();
+
+<span class="kw">record</span> WeatherForecast(DateOnly Date,
+    <span class="kw">int</span> TemperatureC, <span class="kw">string</span>? Summary);</code></pre>
+      </div>
+      <div>
+        <h4>What each part is</h4>
+        <div class="vocab">
+          <div class="vrow"><b>Add…()</b><p>Puts a service in the container. Order mostly doesn't matter. <em>≈ wrapping your app in providers.</em></p></div>
+          <div class="vrow"><b>Use…()</b><p>Adds middleware: a step every request passes through, in the order written. <em>≈ Express <code>app.use()</code>.</em></p></div>
+          <div class="vrow"><b>MapGet()</b><p>A <strong>minimal API</strong> endpoint: a route plus a lambda, defined in <code>Program.cs</code>. <em>≈ Express <code>app.get('/x', fn)</code>.</em></p></div>
+          <div class="vrow"><b>MapOpenApi()</b><p>Serves a generated JSON description of every endpoint at <code>/openapi/v1.json</code>, in Development only. The template has no Swagger UI page.</p></div>
+        </div>
+      </div>
+    </div>
+    <p><strong><code>/</code> returns 404</strong> because only <code>/weatherforecast</code> is mapped. The weather is random, made up on every call. The <code>record</code> at the bottom is explained in §03.</p>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">02</span><h2>Switching to FastEndpoints</h2><span class="sub">Rebuild step 2</span></div>
+    <p>Minimal APIs pile every route into <code>Program.cs</code>. <strong>FastEndpoints</strong>, a NuGet package, gives each endpoint its own class instead: request type, handler and response type together. <code>Account.Service</code> uses MVC controllers, which group many endpoints into one class.</p>
+    <div class="code2">
+      <div>
+        <h4>Install (v8.3) and register · both lines needed</h4>
+        <pre><code>dotnet add Hello.Api package FastEndpoints
+
+<span class="cmt">// Program.cs, register half</span>
+builder.Services.AddFastEndpoints();
+
+<span class="cmt">// Program.cs, pipeline half</span>
+app.UseFastEndpoints();
+<span class="cmt">// ↑ finds every endpoint class in the</span>
+<span class="cmt">//   project, once, at startup</span></code></pre>
+        <p style="font-size:9.2px">Or Rider's NuGet window. Packages must support your target framework, so upgrading .NET means upgrading them too.</p>
+      </div>
+      <div>
+        <h4>Endpoints/HelloEndpoint.cs</h4>
+        <pre><code><span class="kw">public class</span> <span class="ty">HelloRequest</span>
+{
+    <span class="kw">public string</span> Name { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="ty">""</span>;
+}
+
+<span class="kw">public class</span> <span class="ty">HelloEndpoint</span>
+    : Endpoint&lt;HelloRequest, <span class="kw">string</span>&gt;
+{
+    <span class="kw">public override void</span> Configure()
+    {
+        Get(<span class="ty">"/hello"</span>);
+        AllowAnonymous();
+    }
+
+    <span class="kw">public override async</span> Task HandleAsync(
+        HelloRequest req, CancellationToken ct)
+    {
+        <span class="kw">await</span> Send.OkAsync($<span class="ty">"Hello, {req.Name}"</span>, ct);
+    }
+}</code></pre>
+      </div>
+    </div>
+
+    <table class="tbl">
+      <thead><tr><th>Piece</th><th>What it does</th><th>Front-end equivalent</th></tr></thead>
+      <tbody>
+        <tr><th>Endpoint&lt;TReq, TRes&gt;</th><td>The base class. The two type arguments (<strong>generics</strong>) fix what comes in and what goes out, and the compiler holds the handler to both.</td><td><code>Handler&lt;Req, Res&gt;</code> in TS</td></tr>
+        <tr><th>Configure()</th><td>Runs <strong>once at startup</strong>: HTTP verb, route, auth rules.</td><td>the route definition</td></tr>
+        <tr><th>HandleAsync()</th><td>Runs <strong>on every request</strong>, with the request already bound from query, route and body.</td><td>the handler function</td></tr>
+        <tr><th>Send.OkAsync(x, ct)</th><td>Writes status 200 and <code>x</code> as JSON.</td><td><code>res.json(x)</code></td></tr>
+        <tr><th>CancellationToken</th><td>Fires if the client disconnects. Pass it to anything slow.</td><td><code>AbortSignal</code></td></tr>
+        <tr><th>AllowAnonymous()</th><td>FastEndpoints endpoints <strong>require auth by default</strong>. Leave this out with no auth set up and every call returns 500.</td><td><code>[AllowAnonymous]</code> on a controller</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- ============================================ PAGE 3 -->
+<div class="sheet">
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">02</span><h2>Pick the base class by its shape</h2><span class="sub">Four variants</span></div>
+    <table class="tbl">
+      <thead><tr><th>Base class</th><th>Request</th><th>Response</th><th>Used in Hello for</th></tr></thead>
+      <tbody>
+        <tr><th>Endpoint&lt;TReq, TRes&gt;</th><td>typed</td><td>typed</td><td><code>GET /hello</code>, <code>POST /people</code></td></tr>
+        <tr><th>EndpointWithoutRequest&lt;TRes&gt;</th><td>none</td><td>typed</td><td><code>GET /people</code>, a plain "give me the list"</td></tr>
+        <tr><th>Endpoint&lt;TReq&gt;</th><td>typed</td><td>untyped</td><td>not used; for endpoints that return no body</td></tr>
+        <tr><th>EndpointWithoutRequest</th><td>none</td><td>untyped</td><td>not used; a ping or health check</td></tr>
+      </tbody>
+    </table>
+    <p>The request has to be a <strong>class</strong>. The binder fills properties by name (<code>?name=Elly</code> goes into <code>Name</code>), and a <code>string</code> has no properties to fill. The first attempt in the session hit this; it's the third error below.</p>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="lbl">Debugging</span><h2>The errors hit live</h2><span class="sub">Startup → Program.cs / Configure() · request → HandleAsync()</span></div>
+    <table class="tbl">
+      <thead><tr><th>When</th><th>You see</th><th>Cause → fix</th></tr></thead>
+      <tbody>
+        <tr><th>startup</th><td class="hi">No service for type 'FastEndpoints.IServiceResolver' has been registered.</td><td>You called <code>UseFastEndpoints()</code> without <code>AddFastEndpoints()</code>. Add the register-half line.</td></tr>
+        <tr><th>startup</th><td class="hi">No HTTP Verbs declared on: [Hello.Api.Endpoints.HelloEndpoint]</td><td><code>Configure()</code> is empty or missing. Add <code>Get("/hello")</code>.</td></tr>
+        <tr><th>request</th><td class="hi">200 · "Hello, "</td><td>The request type is <code>string</code>, so nothing binds. Use a request class with a <code>Name</code> property.</td></tr>
+        <tr><th>request</th><td class="hi">405 Method Not Allowed</td><td>You added a <code>POST /people</code> endpoint while the app was still running. Only <code>GET /people</code> was registered at startup, so the path exists but not that verb. <strong>Restart.</strong></td></tr>
+        <tr><th>request</th><td class="hi">500 · contains authorization metadata, but a middleware was not found that supports authorization</td><td>No <code>AllowAnonymous()</code>. Not hit live, but you will hit it.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">03</span><h2>C# words met in passing</h2><span class="sub">With the TypeScript you already know</span></div>
+    <table class="tbl">
+      <thead><tr><th>Kind</th><th>What it is</th><th>Nearest TS</th><th>In Hello</th></tr></thead>
+      <tbody>
+        <tr><th>class</th><td>A blueprint. Variables hold a <em>reference</em>, so two variables can point at one object.</td><td><code>class</code></td><td><code>Person</code>, <code>PeopleService</code></td></tr>
+        <tr><th>interface</th><td>A contract with no code. A class must <em>declare</em> it: <code>: IPeopleService</code>. A matching shape isn't enough (Week 1).</td><td><code>interface</code>, but opt-in</td><td><code>IPeopleService</code></td></tr>
+        <tr><th>record</th><td>A class with short syntax and <strong>value equality</strong>: two records holding the same values are equal. Positional properties can't be reassigned.<span class="eg">record Point(int X, int Y); new Point(1,2) == new Point(1,2) → true</span></td><td>no equivalent; a readonly type compared field by field</td><td>the template's <code>WeatherForecast</code></td></tr>
+        <tr><th>struct</th><td>A <strong>value type</strong>: assigning it copies it, and it can't be null.</td><td>how <code>number</code> behaves</td><td><code>int</code>, <code>DateOnly</code></td></tr>
+        <tr><th>enum</th><td>A named set of constants.</td><td><code>enum</code></td><td><code>DayOfWeek.Monday</code></td></tr>
+      </tbody>
+    </table>
+
+    <div class="cols">
+      <div class="blk">
+        <h4 style="font-size:11px">Who can see it</h4>
+        <table class="tbl">
+          <tbody>
+            <tr><th>public</th><td>Anyone, in any project. The class's public contract.</td></tr>
+            <tr><th>internal</th><td>Only code in the <strong>same project</strong>. <strong>The default</strong> for a class with no modifier.</td></tr>
+            <tr><th>protected</th><td>The class and its subclasses.</td></tr>
+            <tr><th>private</th><td>Only the class itself: its internals.</td></tr>
+          </tbody>
+        </table>
+        <div class="fix"><p><b>Easy to miss with four projects.</b> Write <code>class Person</code> without <code>public</code> and it is <code>internal</code> to Domain. Api then fails to build with <code>CS0122: 'Person' is inaccessible due to its protection level</code>. Rider's templates add <code>public</code>; hand-typed classes don't.</p></div>
+      </div>
+      <div class="blk">
+        <h4 style="font-size:11px">Inheriting from a base class</h4>
+        <table class="tbl">
+          <tbody>
+            <tr><th>abstract</th><td>Can't be created with <code>new</code>; only subclassed. <code>Endpoint&lt;,&gt;</code> is abstract.</td></tr>
+            <tr><th>virtual</th><td>A base method that subclasses <em>may</em> replace. <code>Configure</code> and <code>HandleAsync</code> are virtual.</td></tr>
+            <tr><th>override</th><td>Replaces the base version completely.</td></tr>
+            <tr><th>base.X()</th><td>Calls the base version from inside your override. <em>≈ <code>super.x()</code></em></td></tr>
+          </tbody>
+        </table>
+        <p style="font-size:9.6px"><strong>Asked in the session:</strong> after an override, does the base <code>Configure()</code> still run? <strong>No.</strong> It runs only if you call <code>base.Configure()</code> yourself, and FastEndpoints doesn't need you to. <code>static</code> means something belongs to the type, not an instance. Endpoints aren't static, so the framework creates instances of them.</p>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================ PAGE 4 -->
+<div class="sheet">
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">04</span><h2>Splitting into four projects</h2><span class="sub">Rebuild steps 3–4 · recap: Week 1 "The four projects"</span></div>
+    <p>One project works, but anything can then use anything. Splitting it gives each layer its own compiled project, and the references between them become the rules. Week 1 covers why; this is how.</p>
+    <div class="code2">
+      <div>
+        <h4>Create and reference</h4>
+        <pre><code>dotnet new classlib -n Hello.Application
+dotnet new classlib -n Hello.Domain
+dotnet new classlib -n Hello.Infrastructure
+dotnet sln add Hello.Application Hello.Domain \
+               Hello.Infrastructure
+
+<span class="cmt"># "X reference Y" = X is allowed to use Y</span>
+dotnet add Hello.Api reference Hello.Application \
+               Hello.Domain Hello.Infrastructure
+dotnet add Hello.Application reference Hello.Domain
+dotnet add Hello.Infrastructure reference Hello.Domain</code></pre>
+        <p style="font-size:9.4px">Delete each <code>Class1.cs</code>. In Rider: <b>Add → New Project → Class Library</b>, then <b>Add → Reference</b> on the project.</p>
+      </div>
+      <div>
+        <h4>The finished tree</h4>
+        <pre><code>Hello.slnx
+<span class="kw">Hello.Api/</span>                  <span class="cmt">Sdk.Web · runs</span>
+  Program.cs  appsettings.json
+  Properties/launchSettings.json
+  Endpoints/HelloEndpoint.cs
+           PeopleEndpoint.cs
+           AddPersonEndpoint.cs
+<span class="kw">Hello.Application/</span>          <span class="cmt">Sdk · library</span>
+  Services/PeopleService.cs
+<span class="kw">Hello.Domain/</span>               <span class="cmt">Sdk · references nothing</span>
+  Entities/Person.cs
+  Interfaces/IPeopleService.cs
+            IPeopleRepository.cs
+<span class="kw">Hello.Infrastructure/</span>       <span class="cmt">Sdk · library</span>
+  Repositories/InMemoryPeopleRepository.cs</code></pre>
+      </div>
+    </div>
+
+    <div class="fix"><p><b>The trap hit live: three web projects.</b> Made from the wrong template, Application, Domain and Infrastructure each got their own <code>Program.cs</code>, <code>appsettings.json</code> and <code>launchSettings.json</code>. Only Api runs, so only Api should have them. Check the first line of each <code>.csproj</code>: <code>Sdk="Microsoft.NET.Sdk.Web"</code> for Api, plain <code>Microsoft.NET.Sdk</code> for the rest.</p></div>
+
+    <div class="code2">
+      <div>
+        <h4>Hello.Domain · the nouns</h4>
+        <pre><code><span class="kw">namespace</span> Hello.Domain.Entities;  <span class="cmt">// project + folder</span>
+
+<span class="kw">public class</span> <span class="ty">Person</span>
+{
+    <span class="kw">public string</span> Name { <span class="kw">get</span>; <span class="kw">set</span>; } = <span class="ty">""</span>;
+    <span class="kw">public int</span> Age { <span class="kw">get</span>; <span class="kw">set</span>; }
+}</code></pre>
+      </div>
+      <div>
+        <h4>Hello.Domain · the contracts</h4>
+        <pre><code><span class="kw">namespace</span> Hello.Domain.Interfaces;
+
+<span class="kw">public interface</span> <span class="ty">IPeopleRepository</span>
+{
+    Task&lt;IEnumerable&lt;Person&gt;&gt; GetPeople();
+    Task AddPerson(Person person);
+}
+<span class="cmt">// IPeopleService: the same two methods</span></code></pre>
+      </div>
+    </div>
+    <p><strong>A namespace follows the folder path,</strong> and <code>using Hello.Domain.Entities;</code> is the import. <strong>Interfaces:</strong> Hello puts both in Domain. Many codebases keep a service interface like <code>IPeopleService</code> in Application, since only Api calls it. <code>IPeopleRepository</code> must be in Domain: Infrastructure implements it, and here Infrastructure can't see Application.</p>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">05</span><h2>Wiring it together</h2><span class="sub">Rebuild steps 5–6 · recap: Week 1 "Who builds these objects?"</span></div>
+    <p>Each class lists what it needs in its constructor, and the container supplies it. Two ways to write that, which compile to almost the same thing:</p>
+    <div class="code2">
+      <div>
+        <h4>Classic · a backing field</h4>
+        <pre><code><span class="kw">public class</span> <span class="ty">PeopleService</span> : IPeopleService
+{
+    <span class="kw">private readonly</span> IPeopleRepository _repo;
+
+    <span class="kw">public</span> PeopleService(IPeopleRepository repo)
+    {
+        _repo = repo;
+    }
+
+    <span class="kw">public</span> Task&lt;IEnumerable&lt;Person&gt;&gt; GetPeople()
+        =&gt; _repo.GetPeople();
+}</code></pre>
+      </div>
+      <div>
+        <h4>Primary constructor · C# 12+, what Rider suggests</h4>
+        <pre><code><span class="kw">public class</span> <span class="ty">PeopleService</span>(IPeopleRepository repo)
+    : IPeopleService
+{
+    <span class="kw">public</span> Task&lt;IEnumerable&lt;Person&gt;&gt; GetPeople()
+        =&gt; repo.GetPeople();
+
+    <span class="kw">public</span> Task AddPerson(Person person)
+        =&gt; repo.AddPerson(person);
+}</code></pre>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- ============================================ PAGE 5 -->
+<div class="sheet">
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">05</span><h2>readonly, and what it doesn't stop</h2><span class="sub">Wiring, continued</span></div>
+    <table class="tbl">
+      <tbody>
+        <tr><th>_repo = other;</th><td>Outside the constructor: <strong>compile error</strong> <code>CS0191: A readonly field cannot be assigned to</code>. The reference is fixed.</td></tr>
+        <tr><th>_repo.AddPerson(p);</th><td><strong>Allowed.</strong> <code>readonly</code> fixes which object you point at, not what's inside it. <em>≈ a TS <code>const</code> holding an array: no reassigning, but <code>push</code> still works.</em></td></tr>
+        <tr><th>repo = other;</th><td>On a primary-constructor parameter: <strong>compiles</strong>. <span style="color:var(--flag)"><b>Easy to miss:</b></span> these parameters aren't readonly, so the shorthand drops the guard. Nobody reassigns injected services in practice, so both styles are fine.</td></tr>
+      </tbody>
+    </table>
+
+    <div class="code2">
+      <div>
+        <h4>Hello.Infrastructure · the list</h4>
+        <pre><code><span class="kw">public class</span> <span class="ty">InMemoryPeopleRepository</span>
+    : IPeopleRepository
+{
+    <span class="kw">private readonly</span> List&lt;Person&gt; _people =
+    [
+        <span class="kw">new</span>() { Name = <span class="ty">"John"</span>, Age = 20 },
+        <span class="kw">new</span>() { Name = <span class="ty">"Jane"</span>, Age = 21 },
+    ];
+
+    <span class="kw">public</span> Task&lt;IEnumerable&lt;Person&gt;&gt; GetPeople() =&gt;
+        Task.FromResult&lt;IEnumerable&lt;Person&gt;&gt;(_people);
+
+    <span class="kw">public</span> Task AddPerson(Person person)
+    {
+        _people.Add(person);
+        <span class="kw">return</span> Task.CompletedTask;
+    }
+}</code></pre>
+      </div>
+      <div>
+        <h4>Hello.Api · Program.cs, register half</h4>
+        <pre><code>builder.Services.AddFastEndpoints();
+
+<span class="cmt">// "when someone asks for the interface,</span>
+<span class="cmt">//  give them this class"</span>
+builder.Services.AddSingleton&lt;
+    IPeopleRepository, InMemoryPeopleRepository&gt;();
+builder.Services.AddSingleton&lt;
+    IPeopleService, PeopleService&gt;();</code></pre>
+        <p style="font-size:9.4px">Api is the only project that references all the others, so it's the only place that can name both the interface and the class. This is the single line you'd change to swap in a database.</p>
+        <p style="font-size:9.4px">The repository isn't really async. It returns <code>Task</code> anyway, so a database version can drop in without changing any caller.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="lbl">Lifetimes</span><h2>Why the repository has to be a Singleton</h2><span class="sub">Objects = lists</span></div>
+    <div class="strip3">
+      <div>
+        <b>Singleton + Singleton</b>
+        <pre><code>AddSingleton&lt;IPeopleRepository, …&gt;
+AddSingleton&lt;IPeopleService, …&gt;</code></pre>
+        <p>One repository for the life of the process. POST Mary, then GET:</p>
+        <span class="res ok">John · Jane · Mary</span>
+        <p>Restart the app and Mary is gone. The list was never saved anywhere.</p>
+      </div>
+      <div class="bad">
+        <b>Scoped + Scoped</b>
+        <pre><code>AddScoped&lt;IPeopleRepository, …&gt;
+AddScoped&lt;IPeopleService, …&gt;</code></pre>
+        <p>A new repository, and so a new list, for every request. The POST adds Mary to a list that's thrown away when its response goes out:</p>
+        <span class="res no">"Person added" · then John · Jane</span>
+      </div>
+      <div class="bad">
+        <b>Scoped repo + Singleton service</b>
+        <pre><code>AddScoped&lt;IPeopleRepository, …&gt;
+AddSingleton&lt;IPeopleService, …&gt;</code></pre>
+        <p>In Development the app <strong>refuses to start</strong>:</p>
+        <span class="res no">Cannot consume scoped service 'IPeopleRepository' from singleton 'IPeopleService'</span>
+        <p>This is the captive dependency from Week 1.</p>
+      </div>
+    </div>
+    <table class="tbl">
+      <thead><tr><th>Lifetime</th><th>The container…</th><th>Fits</th></tr></thead>
+      <tbody>
+        <tr><th>Singleton</th><td>builds one, the first time it's needed, and hands it to everyone until restart</td><td>Hello's in-memory list · caches · API clients</td></tr>
+        <tr><th>Scoped</th><td>builds one per HTTP request, shared by everything in that request</td><td>a real database repository: the data lives in the database, not in the object</td></tr>
+        <tr><th>Transient</th><td>builds a new one every time anything asks, even twice in one request</td><td>an open question from the session; see §09</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="cols">
+    <div class="blk sec">
+      <div class="blk-h"><span class="num">06</span><h2>Syntax shortcuts</h2></div>
+      <pre><code><span class="cmt">// collection expression (C# 12) ≈ [ ... ]</span>
+List&lt;Person&gt; people = [ a, b ];
+<span class="cmt">// target-typed new: type taken from the left</span>
+Person p = <span class="kw">new</span>() { Name = <span class="ty">"Mary"</span> };
+<span class="cmt">// object initialiser: no () needed</span>
+<span class="kw">new</span> Person { Name = <span class="ty">"Mary"</span>, Age = 30 };
+<span class="cmt">// interpolation ≈ `Hello, ${name}`</span>
+$<span class="ty">"Hello, {req.Name}"</span>
+<span class="cmt">// expression body ≈ arrow function</span>
+<span class="kw">public</span> Task X() =&gt; repo.X();</code></pre>
+      <p style="font-size:9.4px"><strong>Return <code>IEnumerable&lt;T&gt;</code></strong> (≈ <code>Iterable&lt;T&gt;</code>), not <code>List&lt;T&gt;</code>, so the repository can change its storage without changing callers.</p>
+    </div>
+    <div class="blk sec">
+      <div class="blk-h"><span class="num">07</span><h2>Translation card</h2><span class="sub">Week 2 rows</span></div>
+      <div class="xl8">
+        <div class="xr hd"><div>You know</div><div class="m"></div><div>Here it's</div></div>
+        <div class="xr"><div class="a">app.get('/x', fn)</div><div class="m">→</div><div class="b">app.MapGet / an Endpoint class</div></div>
+        <div class="xr"><div class="a">req.query.name</div><div class="m">→</div><div class="b">req.Name (bound by name)</div></div>
+        <div class="xr"><div class="a">res.json(x)</div><div class="m">→</div><div class="b">Send.OkAsync(x, ct)</div></div>
+        <div class="xr"><div class="a">AbortSignal</div><div class="m">→</div><div class="b">CancellationToken</div></div>
+        <div class="xr"><div class="a">Promise.resolve(x)</div><div class="m">→</div><div class="b">Task.FromResult(x)</div></div>
+        <div class="xr"><div class="a">npm i pkg</div><div class="m">→</div><div class="b">dotnet add package Pkg</div></div>
+        <div class="xr"><div class="a">import … from</div><div class="m">→</div><div class="b">using Namespace;</div></div>
+      </div>
+      <p style="font-size:9.4px"><strong>Rider:</strong> <b>⌥↩</b> on a red name: create method, implement members, create derived type, move to file. <code>ctor</code> + Tab: a constructor.</p>
+    </div>
+  </div>
+
+
+</div>
+
+<!-- ============================================ PAGE 6 -->
+<div class="sheet">
+
+  <div class="blk sec">
+   <div style="break-inside:avoid;display:flex;flex-direction:column;gap:2mm">
+    <div class="blk-h"><span class="num">08</span><h2>Adding a feature: POST /people</h2><span class="sub">Rebuild step 7 · five places, top-down</span></div>
+    <p>Once the layers are wired, every feature is the same walk. Write each call before the method exists, then use <b>⌥↩</b> (Alt+Enter on Windows) to create it in the interface and implement it in the class, one layer down at a time.</p>
+    <div class="code2">
+      <div class="seq">
+        <div><span class="n">1</span><span class="p">Api</span><p><code>AddPersonRequest</code> + <code>AddPersonEndpoint</code></p></div>
+        <div><span class="n">2</span><span class="p">Domain</span><p><code>IPeopleService.AddPerson</code></p></div>
+        <div><span class="n">3</span><span class="p">App</span><p><code>PeopleService.AddPerson</code> → repo</p></div>
+        <div><span class="n">4</span><span class="p">Domain</span><p><code>IPeopleRepository.AddPerson</code></p></div>
+        <div><span class="n">5</span><span class="p">Infra</span><p><code>_people.Add(person)</code></p></div>
+        <div class="done"><span class="n">↻</span><span class="p">restart</span><p>New endpoint, so restart, or you get a 405.</p></div>
+      </div>
+      <pre><code><span class="kw">public class</span> <span class="ty">AddPersonEndpoint</span>(IPeopleService service)
+    : Endpoint&lt;AddPersonRequest, <span class="kw">string</span>&gt;
+{
+    <span class="kw">public override void</span> Configure()
+    {
+        Post(<span class="ty">"/people"</span>);
+        AllowAnonymous();
+    }
+
+    <span class="kw">public override async</span> Task HandleAsync(
+        AddPersonRequest req, CancellationToken ct)
+    {
+        <span class="kw">await</span> service.AddPerson(<span class="kw">new</span> Person
+            { Name = req.Name, Age = req.Age });
+        <span class="kw">await</span> Send.OkAsync(<span class="ty">"Person added"</span>, ct);
+    }
+}</code></pre>
+    </div>
+   </div>
+    <p><strong>The refactor at the end:</strong> <code>AddPerson(string name, int age)</code> became <code>AddPerson(Person person)</code>. Rule of thumb: at about four parameters, pass one object instead, as you would in JS.</p>
+    <table class="tbl">
+      <thead><tr><th>Shape</th><th>Lives in</th><th>Is</th><th>Why it's separate</th></tr></thead>
+      <tbody>
+        <tr><th>Person</th><td>Domain</td><td>the <strong>entity</strong>: the thing as the system stores it</td><td>grows <code>Id</code>, <code>CreatedAt</code>… that clients must never set</td></tr>
+        <tr><th>AddPersonRequest</th><td>Api</td><td>the <strong>request DTO</strong> (data transfer object: properties, no behaviour): exactly what the client may send</td><td>it's the public contract; changing it can break callers</td></tr>
+        <tr><th>response model</th><td>Api</td><td>what goes back: maybe the person plus a message or error codes</td><td>Hello returns a bare string for now</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="blk sec">
+    <div class="blk-h"><span class="num">09</span><h2>Homework and what's next</h2></div>
+    <ul class="pts">
+      <li><strong>Rebuild Hello solo</strong> from the order on page 1, then add an endpoint of your own. A real data source (the Supabase ESL dictionary came up) is a new repository in Infrastructure behind a Domain interface; endpoint and service shouldn't change.</li>
+      <li><strong>Question from the session:</strong> for a stateless helper (say, one that returns <code>"Hello " + name</code>), which performs better, Transient or Singleton? <span style="color:var(--ink-3)">Hint: count the objects the container builds over 1,000 requests.</span> And still open: <strong>when would you actually want Transient?</strong></li>
+      <li><strong>Mentioned only:</strong> CQRS / mediator, where one object receives every request and routes it to its handler. <strong>Planned next:</strong> a lifetimes demo (one of each kind), then a real external service in Infrastructure.</li>
+    </ul>
+  </div>
+
+
+  <div class="foot">
+    <span>Backend Ramp · Week 2 · Build a basic API</span>
+    <span>18 Sep 2026 session · Hello API · .NET 10 · FastEndpoints 8.3</span>
+  </div>
+</div>
+</div>
