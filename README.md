@@ -20,6 +20,7 @@ Three folders are not part of the main list:
 | [handoff](handoff/) | 1.0 | Compacts the current conversation into a handoff document so a fresh agent can continue the work, including suggested skills to invoke. |
 | [kiss](kiss/) | 1.0 | Keep It Simple mode. Every answer is cut to the tl;dr: essentials only, cleanly spaced and easy to scan. |
 | [onboard-docs](onboard-docs/) | 1.0 | Analyses a codebase and writes 1–4 skimmable onboarding docs under `/docs/onboard/`, covering topology, sequence diagrams, logic flowcharts and testing. |
+| [se-tag](se-tag/) | 1.0 | Tags software-engineering topics with an emoji, category and subtopic prefix from a fixed 13-category taxonomy, e.g. `[⚙️ BE › HTTP] Top 9 HTTP Request Methods`. Handles single topics or whole lists. |
 
 ## Versioning
 
